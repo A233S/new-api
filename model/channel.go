@@ -6,7 +6,6 @@ import (
 )
 
 type Channel struct {
-	type Channel struct {
 	Id                       int     `json:"id"`
 	Type                     int     `json:"type" gorm:"default:0"`
 	Key                      string  `json:"key" gorm:"not null;index"`
@@ -30,6 +29,8 @@ type Channel struct {
 	Sort                     int     `json:"sort"`
 	OverFrequencyAutoDisable bool    `json:"overFrequencyAutoDisable" gorm:"default:0"`
 }
+
+
 
 
 func GetAllChannels(startIdx int, num int, selectAll bool) ([]*Channel, error) {
