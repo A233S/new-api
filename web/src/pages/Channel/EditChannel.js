@@ -65,6 +65,20 @@ const EditChannel = () => {
 
   const handleInputChange = (e, { name, value }) => {
     setInputs((inputs) => ({ ...inputs, [name]: value }));
+    if (name === 'sort'){
+        setInputs((inputs) => ({ ...inputs, [name]: parseInt(value) }));
+    }
+    if (name === 'overFrequencyAutoDisable') {
+      value = value === 'true' ? 'false' : 'true';
+      if (value === 'true'){
+        // setOverFrequencyAutoDisable(true);
+        setInputs((inputs) => ({ ...inputs, [name]: true }));
+      }else {
+        // setOverFrequencyAutoDisable(false);
+        setInputs((inputs) => ({ ...inputs, [name]: false }));
+      }
+      return;
+    }
     if (name === 'type' && inputs.models.length === 0) {
       let localModels = [];
       switch (value) {
