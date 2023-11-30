@@ -97,7 +97,8 @@ func Distribute() func(c *gin.Context) {
 			ban = false
 		}
 		c.Set("auto_ban", ban)
-		c.Set("model_mapping", channel.GetModelMapping())
+		c.Set("model_mapping", channel.ModelMapping)
+		c.Set("overFrequencyAutoDisable", channel.OverFrequencyAutoDisable)
 		c.Request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", channel.Key))
 		c.Set("base_url", channel.GetBaseURL())
 		switch channel.Type {
