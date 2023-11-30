@@ -10,6 +10,9 @@ type Ability struct {
 	Model     string `json:"model" gorm:"primaryKey;autoIncrement:false"`
 	ChannelId int    `json:"channel_id" gorm:"primaryKey;autoIncrement:false;index"`
 	Enabled   bool   `json:"enabled"`
+	// 新增排序字段,默认为0
+	Sort int `json:"sort" gorm:"default:0"`
+	Enabled   bool   `json:"enabled"`
 	Priority  *int64 `json:"priority" gorm:"bigint;default:0;index"`
 }
 
