@@ -521,6 +521,26 @@ const EditChannel = () => {
               </Form.Field>
             )
           }
+              <Form.Field>
+            <Form.Input
+                label='强制指定使用顺序'
+                name='sort'
+                placeholder={'此项可选，默认值0,大的先使用,用完才会用小的'}
+                onChange={handleInputChange}
+                value={inputs.sort}
+                autoComplete='new-password'
+                type='number'
+            />
+          </Form.Field>
+          <Form.Field>
+            <Form.Checkbox
+                checked={inputs.overFrequencyAutoDisable === true}
+                label='超过频率报错429是否自动禁用通道'
+                name='overFrequencyAutoDisable'
+                onChange={handleInputChange}
+            />
+          </Form.Field>
+
           <Button onClick={handleCancel}>取消</Button>
           <Button type={isEdit ? 'button' : 'submit'} positive onClick={submit}>提交</Button>
         </Form>
