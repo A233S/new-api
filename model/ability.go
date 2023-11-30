@@ -30,6 +30,11 @@ func GetRandomSatisfiedChannel(group string, model string) (*Channel, error) {
 	if common.UsingPostgreSQL {
 		groupCol = `"group"`
 		trueVal = "true"
+		//	根据sort和random排序
+		err = DB.Where("`group` = ? and model = ? and enabled = 1", group, model).Order("sort desc, RANDOM()").Limit(1).First(&ability).Error
+	} else {
+		//	根据sort和random排序
+		err = DB.Where("`group` = ? and model = ? and enabled = 1", group, model).Order("sort desc, RAND()").Limit(1).First(&ability).Error
 	}
 
 	var err error = nil
