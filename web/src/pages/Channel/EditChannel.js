@@ -42,6 +42,9 @@ const EditChannel = () => {
     key: '',
     openai_organization:'',
     base_url: '',
+    order: 0,
+    // The frequency is automatically disabled
+    overFrequencyAutoDisable:false,
     other: '',
     model_mapping: '',
     models: [],
