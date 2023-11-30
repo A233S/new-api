@@ -12,7 +12,6 @@ type Ability struct {
 	Enabled   bool   `json:"enabled"`
 	// 新增排序字段,默认为0
 	Sort int `json:"sort" gorm:"default:0"`
-	Enabled   bool   `json:"enabled"`
 	Priority  *int64 `json:"priority" gorm:"bigint;default:0;index"`
 }
 
@@ -31,10 +30,10 @@ func GetRandomSatisfiedChannel(group string, model string) (*Channel, error) {
 		groupCol = `"group"`
 		trueVal = "true"
 		//	根据sort和random排序
-		err = DB.Where("`group` = ? and model = ? and enabled = 1", group, model).Order("sort desc, RANDOM()").Limit(1).First(&ability).Error
+		err := DB.Where("`group` = ? and model = ? and enabled = 1", group, model).Order("sort desc, RANDOM()").Limit(1).First(&ability).Error
 	} else {
 		//	根据sort和random排序
-		err = DB.Where("`group` = ? and model = ? and enabled = 1", group, model).Order("sort desc, RAND()").Limit(1).First(&ability).Error
+		err := DB.Where("`group` = ? and model = ? and enabled = 1", group, model).Order("sort desc, RAND()").Limit(1).First(&ability).Error
 	}
 
 	var err error = nil
