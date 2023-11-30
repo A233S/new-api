@@ -84,9 +84,9 @@ func testChannel(channel *model.Channel, request ChatRequest) (err error, openai
 func buildTestRequest() *ChatRequest {
 	testRequest := &ChatRequest{
 		Model:     "", // this will be set later
-		MaxTokens: 1,
+		MaxTokens: 2000,
 	}
-	content, _ := json.Marshal("hi")
+	content, _ := json.Marshal("only say 1")
 	testMessage := Message{
 		Role:    "user",
 		Content: content,
