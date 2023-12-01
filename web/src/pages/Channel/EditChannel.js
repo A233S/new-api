@@ -532,21 +532,21 @@ const EditChannel = () => {
                 type='number'
             />
           </Form.Field>
-            <Form.Checkbox
-                checked={overFrequencyAutoDisable}
-                label='超频熔断(HTTP状态码非200时是否自动禁用通道,禁用后每隔一定时间轮训一次如果复活则自动启用通道)'
-                name='overFrequencyAutoDisable'
-                onChange={handleInputChange}
-            />
-          {/* 添加这个闭合标签来修复错误 */}
-          </Form.Field> 
+      <Form.Checkbox
+      checked={overFrequencyAutoDisable}
+      label='超频熔断(HTTP状态码非200时是否自动禁用通道,禁用后每隔一定时间轮训一次如果复活则自动启用通道)'
+      name='overFrequencyAutoDisable'
+      onChange={handleInputChange}
+  />
 
-          <Button onClick={handleCancel}>取消</Button>
-          <Button type={isEdit ? 'button' : 'submit'} positive onClick={submit}>提交</Button>
-        </Form>
-      </Segment>
-    </>
-  );
+  </Form> {/* 添加这个闭合标签来修复错误 */}
+
+  <Button onClick={handleCancel}>取消</Button>
+  <Button type={isEdit ? 'button' : 'submit'} positive onClick={submit}>提交</Button>
+</Form>
+  </Segment>
+</>
+);
 };
 
 
