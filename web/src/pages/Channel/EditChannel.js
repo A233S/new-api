@@ -63,19 +63,22 @@ const EditChannel = () => {
   const [customModel, setCustomModel] = useState('');
   const [overFrequencyAutoDisable, setOverFrequencyAutoDisable] = useState(false);
 
-const handleInputChange = (e, { name, value, checked }) => {
-  if (name === 'overFrequencyAutoDisable') {
-    setInputs((inputs) => ({ ...inputs, [name]: checked }));
-    return;
-  }
-
-  if (name === 'sort') {
-    setInputs((inputs) => ({ ...inputs, [name]: parseInt(value) }));
-  } else {
+  const handleInputChange = (e, { name, value }) => {
     setInputs((inputs) => ({ ...inputs, [name]: value }));
-  }
-};
-
+    if (name === 'sort'){
+        setInputs((inputs) => ({ ...inputs, [name]: parseInt(value) }));
+    }
+    if (name === 'overFrequencyAutoDisable') {
+      value = value === 'true' ? 'false' : 'true';
+      if (value === 'true'){
+        // setOverFrequencyAutoDisable(true);
+        setInputs((inputs) => ({ ...inputs, [name]: true }));
+      }else {
+        // setOverFrequencyAutoDisable(false);
+        setInputs((inputs) => ({ ...inputs, [name]: false }));
+      }
+      return;
+    }
     if (name === 'type' && inputs.models.length === 0) {
       let localModels = [];
       switch (value) {
