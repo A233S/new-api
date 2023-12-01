@@ -64,6 +64,11 @@ const EditChannel = () => {
   const [overFrequencyAutoDisable, setOverFrequencyAutoDisable] = useState(false);
 
   const handleInputChange = (e, { name, value }) => {
+    if (name === 'overFrequencyAutoDisable') {
+      // Notice that here we directly set the value to it's negation  
+      setInputs((inputs) => ({ ...inputs, [name]: !inputs.overFrequencyAutoDisable }));
+      return;
+    }
     setInputs((inputs) => ({ ...inputs, [name]: value }));
     if (name === 'sort'){
         setInputs((inputs) => ({ ...inputs, [name]: parseInt(value) }));
