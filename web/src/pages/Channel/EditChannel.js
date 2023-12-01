@@ -521,7 +521,7 @@ const EditChannel = () => {
               </Form.Field>
             )
           }
-              <Form.Field>
+          <Form.Field>
             <Form.Input
                 label='强制指定使用顺序'
                 name='sort'
@@ -538,7 +538,8 @@ const EditChannel = () => {
                 name='overFrequencyAutoDisable'
                 onChange={handleInputChange}
             />
-          </Form.Field>
+          {/* 添加这个闭合标签来修复错误 */}
+          </Form.Field> 
 
           <Button onClick={handleCancel}>取消</Button>
           <Button type={isEdit ? 'button' : 'submit'} positive onClick={submit}>提交</Button>
@@ -547,5 +548,6 @@ const EditChannel = () => {
     </>
   );
 };
+
 
 export default EditChannel;
