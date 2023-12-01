@@ -183,7 +183,113 @@ const ChannelsTable = () => {
     }
   };
 
-  // ...省略部分代码...
+  const searchChannels = async () => {
+    if (searchKeyword === '') {
+      // if keyword is blank, load files instead.
+      await loadChannels(0);
+      setActivePage(1);
+      return;
+    }
+    setSearching(true);
+    const res = await API.get(`/api/channel/search?keyword=${searchKeyword}`);
+    const { success, message, data } = res.data;
+    if (success) {
+      setChannels(data);
+      setActivePage(1);
+    } else {
+      showError(message);
+    }
+    setSearching(false);
+  };
+
+  const testChannel = async (id, name, idx) => {
+    const res = await API.get(`/api/channel/test/${id}/`);
+    const { success, message, time } = res.data;
+    if (success) {
+      let newChannels = [...channels];
+      let realIdx = (activePage - 1) * pageSize + idx;
+      newChannels[realIdx].response_time = time * 1000;
+      newChannels[realIdx].test_time = Date.now() / 1000;
+      setChannels(newChannels);
+      showInfo(`通道 ${name} 测试成功，耗时 ${time.toFixed(2)} 秒。`);
+    } else {
+      showError(message);
+    }
+  };
+
+  const testAllChannels = async () => {
+    const res = await API.get(`/api/channel/test`);
+    const { success, message } = res.data;
+    if (success) {
+      showInfo('已成功开始测试所有已启用通道，请刷新页面查看结果。');
+    } else {
+      showError(message);
+    }
+  };
+
+  const deleteAllDisabledChannels = async () => {
+    const res = await API.delete(`/api/channel/disabled`);
+    const { success, message, data } = res.data;
+    if (success) {
+      showSuccess(`已删除所有禁用渠道，共计 ${data} 个`);
+      await refresh();
+    } else {
+      showError(message);
+    }
+  };
+
+  const updateChannelBalance = async (id, name, idx) => {
+    const res = await API.get(`/api/channel/update_balance/${id}/`);
+    const { success, message, balance } = res.data;
+    if (success) {
+      let newChannels = [...channels];
+      let realIdx = (activePage - 1) * pageSize + idx;
+      newChannels[realIdx].balance = balance;
+      newChannels[realIdx].balance_updated_time = Date.now() / 1000;
+      setChannels(newChannels);
+      showInfo(`通道 ${name} 余额更新成功！`);
+    } else {
+      showError(message);
+    }
+  };
+
+  const updateAllChannelsBalance = async () => {
+    setUpdatingBalance(true);
+    const res = await API.get(`/api/channel/update_balance`);
+    const { success, message } = res.data;
+    if (success) {
+      showInfo('已更新完毕所有已启用通道余额！');
+    } else {
+      showError(message);
+    }
+    setUpdatingBalance(false);
+  };
+
+  const handleKeywordChange = async (e, { value }) => {
+    setSearchKeyword(value.trim());
+  };
+
+  const sortChannel = (key) => {
+    if (channels.length === 0) return;
+    setLoading(true);
+    let sortedChannels = [...channels];
+    if (typeof sortedChannels[0][key] === 'string') {
+      sortedChannels.sort((a, b) => {
+        return ('' + a[key]).localeCompare(b[key]);
+      });
+    } else {
+      sortedChannels.sort((a, b) => {
+        if (a[key] === b[key]) return 0;
+        if (a[key] > b[key]) return -1;
+        if (a[key] < b[key]) return 1;
+      });
+    }
+    if (sortedChannels[0].id === channels[0].id) {
+      sortedChannels.reverse();
+    }
+    setChannels(sortedChannels);
+    setLoading(false);
+  };
 
   return (
     <>
