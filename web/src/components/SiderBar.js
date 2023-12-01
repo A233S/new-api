@@ -1,9 +1,9 @@
-import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { UserContext } from '../context/User';
+import React, {useContext, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
+import {UserContext} from '../context/User';
 
-import { Button, Container, Icon, Menu, Segment } from 'semantic-ui-react';
-import { API, getLogo, getSystemName, isAdmin, isMobile, showSuccess } from '../helpers';
+import {Button, Container, Icon, Menu, Segment} from 'semantic-ui-react';
+import {API, getLogo, getSystemName, isAdmin, isMobile, showSuccess} from '../helpers';
 import '../index.css';
 
 import {
@@ -19,7 +19,7 @@ import {
     IconHome,
     IconImage
 } from '@douyinfe/semi-icons';
-import { Nav, Avatar, Dropdown, Layout } from '@douyinfe/semi-ui';
+import {Nav, Avatar, Dropdown, Layout} from '@douyinfe/semi-ui';
 
 // HeaderBar Buttons
 let headerButtons = [
@@ -27,65 +27,65 @@ let headerButtons = [
         text: '首页',
         itemKey: 'home',
         to: '/',
-        icon: <IconHome />
+        icon: <IconHome/>
     },
     {
         text: '渠道',
         itemKey: 'channel',
         to: '/channel',
-        icon: <IconLayers />,
-        className: isAdmin() ? 'semi-navigation-item-normal' : 'tableHiddle',
+        icon: <IconLayers/>,
+        className: isAdmin()?'semi-navigation-item-normal':'tableHiddle',
     },
     {
         text: '聊天',
         itemKey: 'chat',
         to: '/chat',
         icon: <IconComment />,
-        className: localStorage.getItem('chat_link') ? 'semi-navigation-item-normal' : 'tableHiddle',
+        className: localStorage.getItem('chat_link')?'semi-navigation-item-normal':'tableHiddle',
     },
     {
         text: '令牌',
         itemKey: 'token',
         to: '/token',
-        icon: <IconKey />
+        icon: <IconKey/>
     },
     {
         text: '兑换码',
         itemKey: 'redemption',
         to: '/redemption',
-        icon: <IconGift />,
-        className: isAdmin() ? 'semi-navigation-item-normal' : 'tableHiddle',
+        icon: <IconGift/>,
+        className: isAdmin()?'semi-navigation-item-normal':'tableHiddle',
     },
     {
         text: '钱包',
         itemKey: 'topup',
         to: '/topup',
-        icon: <IconCreditCard />
+        icon: <IconCreditCard/>
     },
     {
         text: '用户管理',
         itemKey: 'user',
         to: '/user',
-        icon: <IconUser />,
-        className: isAdmin() ? 'semi-navigation-item-normal' : 'tableHiddle',
+        icon: <IconUser/>,
+        className: isAdmin()?'semi-navigation-item-normal':'tableHiddle',
     },
     {
         text: '日志',
         itemKey: 'log',
         to: '/log',
-        icon: <IconHistogram />
+        icon: <IconHistogram/>
     },
     {
         text: '绘图',
         itemKey: 'midjourney',
         to: '/midjourney',
-        icon: <IconImage />
+        icon: <IconImage/>
     },
     {
         text: '设置',
         itemKey: 'setting',
         to: '/setting',
-        icon: <IconSetting />
+        icon: <IconSetting/>
     },
     // {
     //     text: '关于',
@@ -100,9 +100,8 @@ const SiderBar = () => {
     let navigate = useNavigate();
     const [selectedKeys, setSelectedKeys] = useState(['home']);
 
-    // 根据屏幕大小初始化 showSidebar 状态
-    const [isCollapsed, setIsCollapsed] = useState(!isMobile());
-
+    // 将侧边栏的默认状态设为收起，通过设置为 false
+    const [showSidebar, setShowSidebar] = useState(false);
     const systemName = getSystemName();
     const logo = getLogo();
 
@@ -110,7 +109,7 @@ const SiderBar = () => {
         setShowSidebar(false);
         await API.get('/api/user/logout');
         showSuccess('注销成功!');
-        userDispatch({ type: 'logout' });
+        userDispatch({type: 'logout'});
         localStorage.removeItem('user');
         navigate('/login');
     }
@@ -120,26 +119,28 @@ const SiderBar = () => {
             <Layout>
                 <div style={{ height: '100%' }}>
                     <Nav
-                        mode={'horizontal'}
+                        // ... 其他 Nav 属性
+                        // mode={'horizontal'}
+                        // bodyStyle={{ height: 100 }}
                         defaultIsCollapsed={isMobile()}
                         selectedKeys={selectedKeys}
-                        renderWrapper={({ itemElement, isSubNav, isInSubNav, props }) => {
+                        renderWrapper={({itemElement, isSubNav, isInSubNav, props}) => {
                             const routerMap = {
-                                home: '/',
-                                channel: '/channel',
-                                token: '/token',
-                                redemption: '/redemption',
-                                topup: '/topup',
-                                user: '/user',
-                                log: '/log',
-                                midjourney: '/midjourney',
-                                setting: '/setting',
-                                about: '/about',
-                                chat: '/chat',
+                                home: "/",
+                                channel: "/channel",
+                                token: "/token",
+                                redemption: "/redemption",
+                                topup: "/topup",
+                                user: "/user",
+                                log: "/log",
+                                midjourney: "/midjourney",
+                                setting: "/setting",
+                                about: "/about",
+                                chat: "/chat",
                             };
                             return (
                                 <Link
-                                    style={{ textDecoration: 'none' }}
+                                    style={{textDecoration: "none"}}
                                     to={routerMap[props.itemKey]}
                                 >
                                     {itemElement}
@@ -147,25 +148,24 @@ const SiderBar = () => {
                             );
                         }}
                         items={headerButtons}
-                        onSelect={(key) => {
+                        onSelect={key => {
                             console.log(key);
                             setSelectedKeys([key.itemKey]);
                         }}
                         header={{
-                            logo: <img src={logo} alt='logo' style={{ marginRight: '0.75em' }} />,
+                            logo: <img src={logo} alt='logo' style={{marginRight: '0.75em'}}/>,
                             text: systemName,
                         }}
-                        isCollapsed={isCollapsed} // 在这里连接状态
-                        onCollapseChange={() => setIsCollapsed(!isCollapsed)} // 处理折叠状态的变化
+                        // footer={{
+                        //   text: '© 2021 NekoAPI',
+                        // }}
+                        // 设置侧边栏在所有屏幕尺寸下默认收起
+                        isCollapsed={true} // 修改的行
+
+                        // ... Nav 组件的其他部分
                     >
+
                         <Nav.Footer collapseButton={true}>
-                            {/* 切换侧边栏展开/折叠的按钮 */}
-                            <div
-                                onClick={() => setIsCollapsed(!isCollapsed)} // 单击时切换 isCollapsed 状态
-                                style={{ cursor: 'pointer' }} // 可选: 更改光标以指示可单击
-                            >
-                                {isCollapsed ? <Icon name='angle double right' /> : <Icon name='angle double left' />}
-                            </div>
                         </Nav.Footer>
                     </Nav>
                 </div>
