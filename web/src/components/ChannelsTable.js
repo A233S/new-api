@@ -28,7 +28,111 @@ function renderType(type) {
 }
 
 const ChannelsTable = () => {
-  // ...省略部分代码...
+  const [channels, setChannels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activePage, setActivePage] = useState(1);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [updatingBalance, setUpdatingBalance] = useState(false);
+  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+  const [showPrompt, setShowPrompt] = useState(shouldShowPrompt("channel-test"));
+
+  const loadChannels = async (startIdx) => {
+    const res = await API.get(`/api/channel/?p=${startIdx}&page_size=${pageSize}`);
+    const { success, message, data } = res.data;
+    if (success) {
+      if (startIdx === 0) {
+        setChannels(data);
+      } else {
+        let newChannels = [...channels];
+        newChannels.splice(startIdx * pageSize, data.length, ...data);
+        setChannels(newChannels);
+      }
+    } else {
+      showError(message);
+    }
+    setLoading(false);
+  };
+
+  const onPaginationChange = (e, { activePage }) => {
+    (async () => {
+      if (activePage === Math.ceil(channels.length / pageSize) + 1) {
+        // In this case we have to load more data and then append them.
+        await loadChannels(activePage - 1, pageSize);
+      }
+      setActivePage(activePage);
+    })();
+  };
+
+  const setItemsPerPage = (e) => {
+    console.log(e.target.value);
+    //parseInt(e.target.value);
+    setPageSize(parseInt(e.target.value));
+    loadChannels(0);
+  }
+
+  const refresh = async () => {
+    setLoading(true);
+    await loadChannels(activePage - 1);
+  };
+
+  useEffect(() => {
+    loadChannels(0)
+      .then()
+      .catch((reason) => {
+        showError(reason);
+      });
+  }, []);
+
+  const manageChannel = async (id, action, idx, value) => {
+    let data = { id };
+    let res;
+    switch (action) {
+      case 'delete':
+        res = await API.delete(`/api/channel/${id}/`);
+        break;
+      case 'enable':
+        data.status = 1;
+        res = await API.put('/api/channel/', data);
+        break;
+      case 'disable':
+        data.status = 2;
+        res = await API.put('/api/channel/', data);
+        break;
+      case 'priority':
+        if (value === '') {
+          return;
+        }
+        data.priority = parseInt(value);
+        res = await API.put('/api/channel/', data);
+        break;
+      case 'weight':
+        if (value === '') {
+          return;
+        }
+        data.weight = parseInt(value);
+        if (data.weight < 0) {
+          data.weight = 0;
+        }
+        res = await API.put('/api/channel/', data);
+        break;
+    }
+    const { success, message } = res.data;
+    if (success) {
+      showSuccess('操作成功完成！');
+      let channel = res.data.data;
+      let newChannels = [...channels];
+      let realIdx = (activePage - 1) * pageSize + idx;
+      if (action === 'delete') {
+        newChannels[realIdx].deleted = true;
+      } else {
+        newChannels[realIdx].status = channel.status;
+      }
+      setChannels(newChannels);
+    } else {
+      showError(message);
+    }
+  };
 
   const renderStatus = (status) => {
     switch (status) {
