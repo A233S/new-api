@@ -1,5 +1,5 @@
-import React, {useContext, useState, useEffect} from 'react';
-import {Link, useNavigate, useLocation} from 'react-router-dom';
+import React, {useContext, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
 import {UserContext} from '../context/User';
 
 import {Button, Container, Icon, Menu, Segment} from 'semantic-ui-react';
@@ -21,6 +21,7 @@ import {
 } from '@douyinfe/semi-icons';
 import {Nav, Avatar, Dropdown, Layout} from '@douyinfe/semi-ui';
 
+// HeaderBar Buttons
 let headerButtons = [
     {
         text: '首页',
@@ -86,26 +87,23 @@ let headerButtons = [
         to: '/setting',
         icon: <IconSetting/>
     },
+    // {
+    //     text: '关于',
+    //     itemKey: 'about',
+    //     to: '/about',
+    //     icon: <IconAt/>
+    // }
 ];
 
 const SiderBar = () => {
     const [userState, userDispatch] = useContext(UserContext);
     let navigate = useNavigate();
     const [selectedKeys, setSelectedKeys] = useState(['home']);
-    let location = useLocation();
 
-    const pathsToShowSidebar = ['/', '/topup','/setting'];
-    const shouldShowSidebar = pathsToShowSidebar.includes(location.pathname);
-    const [showSidebar, setShowSidebar] = useState(shouldShowSidebar);
-
+    // 将侧边栏的默认状态设为收起，通过设置为 false
+    const [showSidebar, setShowSidebar] = useState(false);
     const systemName = getSystemName();
     const logo = getLogo();
-
-    useEffect(() => {
-      setShowSidebar(pathsToShowSidebar.includes(location.pathname));
-    }, [location]);
-
-
 
     async function logout() {
         setShowSidebar(false);
@@ -116,59 +114,64 @@ const SiderBar = () => {
         navigate('/login');
     }
 
-return (
-    <>
-        <Layout>
-            <div style={{height: '100%'}}>
-                <Nav
-                    defaultCollapsed={true}
-                    // mode={'horizontal'}
-                    // bodyStyle={{ height: 100 }}
-                    defaultIsCollapsed={isMobile()}
-                    selectedKeys={selectedKeys}
-                    renderWrapper={({itemElement, isSubNav, isInSubNav, props}) => {
-                        const routerMap = {
-                            home: "/",
-                            channel: "/channel",
-                            token: "/token",
-                            redemption: "/redemption",
-                            topup: "/topup",
-                            user: "/user",
-                            log: "/log",
-                            midjourney: "/midjourney",
-                            setting: "/setting",
-                            about: "/about",
-                            chat: "/chat",
-                        };
-                        return (
-                            <Link
-                                style={{textDecoration: "none"}}
-                                to={routerMap[props.itemKey]}
-                            >
-                                {itemElement}
-                            </Link>
-                        );
-                    }}
-                    items={headerButtons}
-                    onSelect={key => {
-                        console.log(key);
-                        setSelectedKeys([key.itemKey]);
-                    }}
-                    header={{
-                        logo: <img src={logo} alt='logo' style={{marginRight: '0.75em'}}/>,
-                        text: systemName,
-                    }}
-                    // footer={{
-                    //   text: '© 2021 NekoAPI',
-                    // }}
-                >
-                    <Nav.Footer collapseButton={true}>
-                    </Nav.Footer>
-                </Nav>
-            </div>
-        </Layout>
-    </>
-);
+    return (
+        <>
+            <Layout>
+                <div style={{ height: '100%' }}>
+                    <Nav
+                        // ... 其他 Nav 属性
+                        // mode={'horizontal'}
+                        // bodyStyle={{ height: 100 }}
+                        defaultIsCollapsed={isMobile()}
+                        selectedKeys={selectedKeys}
+                        renderWrapper={({itemElement, isSubNav, isInSubNav, props}) => {
+                            const routerMap = {
+                                home: "/",
+                                channel: "/channel",
+                                token: "/token",
+                                redemption: "/redemption",
+                                topup: "/topup",
+                                user: "/user",
+                                log: "/log",
+                                midjourney: "/midjourney",
+                                setting: "/setting",
+                                about: "/about",
+                                chat: "/chat",
+                            };
+                            return (
+                                <Link
+                                    style={{textDecoration: "none"}}
+                                    to={routerMap[props.itemKey]}
+                                >
+                                    {itemElement}
+                                </Link>
+                            );
+                        }}
+                        items={headerButtons}
+                        onSelect={key => {
+                            console.log(key);
+                            setSelectedKeys([key.itemKey]);
+                        }}
+                        header={{
+                            logo: <img src={logo} alt='logo' style={{marginRight: '0.75em'}}/>,
+                            text: systemName,
+                        }}
+                        // footer={{
+                        //   text: '© 2021 NekoAPI',
+                        // }}
+                        // 设置侧边栏在所有屏幕尺寸下默认收起
+                        isCollapsed={true} // 修改的行
 
+                        // ... Nav 组件的其他部分
+                    >
+
+                        <Nav.Footer collapseButton={true}>
+                        </Nav.Footer>
+                    </Nav>
+                </div>
+            </Layout>
+        </>
+    );
+};
 
 export default SiderBar;
