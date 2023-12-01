@@ -41,11 +41,14 @@ const ChannelsTable = () => {
     const res = await API.get(`/api/channel/?p=${startIdx}&page_size=${pageSize}`);
     const { success, message, data } = res.data;
     if (success) {
+      // Sort channels by ID in descending order
+      const sortedChannels = data.sort((a, b) => b.id - a.id);
+
       if (startIdx === 0) {
-        setChannels(data);
+        setChannels(sortedChannels);
       } else {
         let newChannels = [...channels];
-        newChannels.splice(startIdx * pageSize, data.length, ...data);
+        newChannels.splice(startIdx * pageSize, sortedChannels.length, ...sortedChannels);
         setChannels(newChannels);
       }
     } else {
@@ -53,6 +56,7 @@ const ChannelsTable = () => {
     }
     setLoading(false);
   };
+
 
   const onPaginationChange = (e, { activePage }) => {
     (async () => {
