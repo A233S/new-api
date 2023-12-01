@@ -1,5 +1,5 @@
 import React, {useContext, useState} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import {Link, useNavigate, useLocation} from 'react-router-dom';
 import {UserContext} from '../context/User';
 
 import {Button, Container, Icon, Menu, Segment} from 'semantic-ui-react';
@@ -21,7 +21,6 @@ import {
 } from '@douyinfe/semi-icons';
 import {Nav, Avatar, Dropdown, Layout} from '@douyinfe/semi-ui';
 
-// HeaderBar Buttons
 let headerButtons = [
     {
         text: '首页',
@@ -87,19 +86,18 @@ let headerButtons = [
         to: '/setting',
         icon: <IconSetting/>
     },
-    // {
-    //     text: '关于',
-    //     itemKey: 'about',
-    //     to: '/about',
-    //     icon: <IconAt/>
-    // }
 ];
 
 const SiderBar = () => {
     const [userState, userDispatch] = useContext(UserContext);
     let navigate = useNavigate();
     const [selectedKeys, setSelectedKeys] = useState(['home']);
-    const [showSidebar, setShowSidebar] = useState(false);
+    let location = useLocation();
+
+    const pathsToShowSidebar = ['/', '/topup','/setting'];
+    const shouldShowSidebar = pathsToShowSidebar.includes(location.pathname);
+    const [showSidebar, setShowSidebar] = useState(shouldShowSidebar);
+
     const systemName = getSystemName();
     const logo = getLogo();
 
@@ -117,9 +115,7 @@ const SiderBar = () => {
             <Layout>
                 <div style={{height: '100%'}}>
                     <Nav
-                        // mode={'horizontal'}
-                        // bodyStyle={{ height: 100 }}
-                        defaultIsCollapsed={isMobile()}
+                        defaultIsCollapsed={!showSidebar}
                         selectedKeys={selectedKeys}
                         renderWrapper={({itemElement, isSubNav, isInSubNav, props}) => {
                             const routerMap = {
@@ -146,18 +142,13 @@ const SiderBar = () => {
                         }}
                         items={headerButtons}
                         onSelect={key => {
-                            console.log(key);
                             setSelectedKeys([key.itemKey]);
                         }}
                         header={{
                             logo: <img src={logo} alt='logo' style={{marginRight: '0.75em'}}/>,
                             text: systemName,
                         }}
-                        // footer={{
-                        //   text: '© 2021 NekoAPI',
-                        // }}
                     >
-
                         <Nav.Footer collapseButton={true}>
                         </Nav.Footer>
                     </Nav>
