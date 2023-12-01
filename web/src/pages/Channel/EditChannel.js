@@ -1,173 +1,557 @@
-import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { UserContext } from '../context/User';
+import React, { useEffect, useState } from 'react';
+import { Button, Form, Header, Input, Message, Segment } from 'semantic-ui-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { API, showError, showInfo, showSuccess, verifyJSON } from '../../helpers';
+import { CHANNEL_OPTIONS } from '../../constants';
 
-import { Button, Container, Icon, Menu, Segment } from 'semantic-ui-react';
-import { API, getLogo, getSystemName, isAdmin, isMobile, showSuccess } from '../helpers';
-import '../index.css';
-
-import {
-    IconAt,
-    IconHistogram,
-    IconGift,
-    IconKey,
-    IconUser,
-    IconLayers,
-    IconSetting,
-    IconCreditCard,
-    IconComment,
-    IconHome,
-    IconImage
-} from '@douyinfe/semi-icons';
-import { Nav, Avatar, Dropdown, Layout } from '@douyinfe/semi-ui';
-
-// HeaderBar Buttons
-let headerButtons = [
-    {
-        text: '首页',
-        itemKey: 'home',
-        to: '/',
-        icon: <IconHome />
-    },
-    {
-        text: '渠道',
-        itemKey: 'channel',
-        to: '/channel',
-        icon: <IconLayers />,
-        className: isAdmin() ? 'semi-navigation-item-normal' : 'tableHiddle',
-    },
-    {
-        text: '聊天',
-        itemKey: 'chat',
-        to: '/chat',
-        icon: <IconComment />,
-        className: localStorage.getItem('chat_link') ? 'semi-navigation-item-normal' : 'tableHiddle',
-    },
-    {
-        text: '令牌',
-        itemKey: 'token',
-        to: '/token',
-        icon: <IconKey />
-    },
-    {
-        text: '兑换码',
-        itemKey: 'redemption',
-        to: '/redemption',
-        icon: <IconGift />,
-        className: isAdmin() ? 'semi-navigation-item-normal' : 'tableHiddle',
-    },
-    {
-        text: '钱包',
-        itemKey: 'topup',
-        to: '/topup',
-        icon: <IconCreditCard />
-    },
-    {
-        text: '用户管理',
-        itemKey: 'user',
-        to: '/user',
-        icon: <IconUser />,
-        className: isAdmin() ? 'semi-navigation-item-normal' : 'tableHiddle',
-    },
-    {
-        text: '日志',
-        itemKey: 'log',
-        to: '/log',
-        icon: <IconHistogram />
-    },
-    {
-        text: '绘图',
-        itemKey: 'midjourney',
-        to: '/midjourney',
-        icon: <IconImage />
-    },
-    {
-        text: '设置',
-        itemKey: 'setting',
-        to: '/setting',
-        icon: <IconSetting />
-    },
-    // {
-    //     text: '关于',
-    //     itemKey: 'about',
-    //     to: '/about',
-    //     icon: <IconAt/>
-    // }
-];
-
-const SiderBar = () => {
-    const [userState, userDispatch] = useContext(UserContext);
-    let navigate = useNavigate();
-    const [selectedKeys, setSelectedKeys] = useState(['home']);
-
-    // 根据屏幕大小初始化 showSidebar 状态
-    const [isCollapsed, setIsCollapsed] = useState(!isMobile());
-
-    async function logout() {
-        setShowSidebar(false);
-        await API.get('/api/user/logout');
-        showSuccess('注销成功!');
-        userDispatch({ type: 'logout' });
-        localStorage.removeItem('user');
-        navigate('/login');
-    }
-
-    return (
-        <>
-            <Layout>
-                <div style={{ height: '100%' }}>
-                    <Nav
-                        defaultIsCollapsed={isMobile()}
-                        selectedKeys={selectedKeys}
-                        renderWrapper={({ itemElement, isSubNav, isInSubNav, props }) => {
-                            const routerMap = {
-                                home: '/',
-                                channel: '/channel',
-                                token: '/token',
-                                redemption: '/redemption',
-                                topup: '/topup',
-                                user: '/user',
-                                log: '/log',
-                                midjourney: '/midjourney',
-                                setting: '/setting',
-                                about: '/about',
-                                chat: '/chat',
-                            };
-                            return (
-                                <Link
-                                    style={{ textDecoration: 'none' }}
-                                    to={routerMap[props.itemKey]}
-                                >
-                                    {itemElement}
-                                </Link>
-                            );
-                        }}
-                        items={headerButtons}
-                        onSelect={(key) => {
-                            console.log(key);
-                            setSelectedKeys([key.itemKey]);
-                        }}
-                        header={{
-                            logo: <img src={getLogo()} alt='logo' style={{ marginRight: '0.75em' }} />,
-                            text: getSystemName(),
-                        }}
-                        isCollapsed={isCollapsed} // 在这里连接状态
-                        onCollapseChange={() => setIsCollapsed(!isCollapsed)} // 处理折叠状态的变化
-                    >
-                        <Nav.Footer collapseButton={true}>
-                            {/* 切换侧边栏展开/折叠的按钮 */}
-                            <div
-                                onClick={() => setIsCollapsed(!isCollapsed)} // 单击时切换 isCollapsed 状态
-                                style={{ cursor: 'pointer' }} // 可选: 更改光标以指示可单击
-                            >
-                                {isCollapsed ? <Icon name='angle double right' /> : <Icon name='angle double left' />}
-                            </div>
-                        </Nav.Footer>
-                    </Nav>
-                </div>
-            </Layout>
-        </>
-    );
+const MODEL_MAPPING_EXAMPLE = {
+  'gpt-3.5-turbo-0301': 'gpt-3.5-turbo',
+  'gpt-4-0314': 'gpt-4',
+  'gpt-4-32k-0314': 'gpt-4-32k'
 };
 
-export default SiderBar;
+function type2secretPrompt(type) {
+  // inputs.type === 15 ? '按照如下格式输入：APIKey|SecretKey' : (inputs.type === 18 ? '按照如下格式输入：APPID|APISecret|APIKey' : '请输入渠道对应的鉴权密钥')
+  switch (type) {
+    case 15:
+      return '按照如下格式输入：APIKey|SecretKey';
+    case 18:
+      return '按照如下格式输入：APPID|APISecret|APIKey';
+    case 22:
+      return '按照如下格式输入：APIKey-AppId，例如：fastgpt-0sp2gtvfdgyi4k30jwlgwf1i-64f335d84283f05518e9e041';
+    case 23:
+      return '按照如下格式输入：AppId|SecretId|SecretKey';
+    default:
+      return '请输入渠道对应的鉴权密钥';
+  }
+}
+
+const EditChannel = () => {
+  const params = useParams();
+  const navigate = useNavigate();
+  const channelId = params.id;
+  const isEdit = channelId !== undefined;
+  const [loading, setLoading] = useState(isEdit);
+  const handleCancel = () => {
+    navigate('/channel');
+  };
+
+  const originInputs = {
+    name: '',
+    type: 1,
+    key: '',
+    openai_organization:'',
+    base_url: '',
+    order: 0,
+    // The frequency is automatically disabled
+    overFrequencyAutoDisable:false,
+    other: '',
+    model_mapping: '',
+    models: [],
+    auto_ban: 1,
+    groups: ['default']
+  };
+  const [batch, setBatch] = useState(false);
+  const [autoBan, setAutoBan] = useState(true);
+  // const [autoBan, setAutoBan] = useState(true);
+  const [inputs, setInputs] = useState(originInputs);
+  const [originModelOptions, setOriginModelOptions] = useState([]);
+  const [modelOptions, setModelOptions] = useState([]);
+  const [groupOptions, setGroupOptions] = useState([]);
+  const [basicModels, setBasicModels] = useState([]);
+  const [fullModels, setFullModels] = useState([]);
+  const [customModel, setCustomModel] = useState('');
+  const [overFrequencyAutoDisable, setOverFrequencyAutoDisable] = useState(false);
+
+  const handleInputChange = (e, { name, value }) => {
+    if (name === 'overFrequencyAutoDisable') {
+      // Notice that here we directly set the value to it's negation  
+      setInputs((inputs) => ({ ...inputs, [name]: !inputs.overFrequencyAutoDisable }));
+      return;
+    }
+    setInputs((inputs) => ({ ...inputs, [name]: value }));
+    if (name === 'sort'){
+        setInputs((inputs) => ({ ...inputs, [name]: parseInt(value) }));
+    }
+    if (name === 'overFrequencyAutoDisable') {
+      value = value === 'true' ? 'false' : 'true';
+      if (value === 'true'){
+        // setOverFrequencyAutoDisable(true);
+        setInputs((inputs) => ({ ...inputs, [name]: true }));
+      }else {
+        // setOverFrequencyAutoDisable(false);
+        setInputs((inputs) => ({ ...inputs, [name]: false }));
+      }
+      return;
+    }
+    if (name === 'type' && inputs.models.length === 0) {
+      let localModels = [];
+      switch (value) {
+        case 14:
+          localModels = ['claude-instant-1', 'claude-2'];
+          break;
+        case 11:
+          localModels = ['PaLM-2'];
+          break;
+        case 15:
+          localModels = ['ERNIE-Bot', 'ERNIE-Bot-turbo', 'ERNIE-Bot-4', 'Embedding-V1'];
+          break;
+        case 17:
+          localModels = ['qwen-turbo', 'qwen-plus', 'text-embedding-v1'];
+          break;
+        case 16:
+          localModels = ['chatglm_pro', 'chatglm_std', 'chatglm_lite'];
+          break;
+        case 18:
+          localModels = ['SparkDesk'];
+          break;
+        case 19:
+          localModels = ['360GPT_S2_V9', 'embedding-bert-512-v1', 'embedding_s1_v1', 'semantic_similarity_s1_v1'];
+          break;
+        case 23:
+          localModels = ['hunyuan'];
+          break;
+      }
+      setInputs((inputs) => ({ ...inputs, models: localModels }));
+    }
+    //setAutoBan
+  };
+
+  const loadChannel = async () => {
+    let res = await API.get(`/api/channel/${channelId}`);
+    const { success, message, data } = res.data;
+    if (success) {
+      if (data.models === '') {
+        data.models = [];
+      } else {
+        data.models = data.models.split(',');
+      }
+      if (data.group === '') {
+        data.groups = [];
+      } else {
+        data.groups = data.group.split(',');
+      }
+      if (data.model_mapping !== '') {
+        data.model_mapping = JSON.stringify(JSON.parse(data.model_mapping), null, 2);
+      }
+      setInputs(data);
+      if (data.auto_ban === 0) {
+        setAutoBan(false);
+      } else {
+        setAutoBan(true);
+      }
+      // console.log(data);
+    } else {
+      showError(message);
+    }
+    setLoading(false);
+  };
+
+  const fetchModels = async () => {
+    try {
+      let res = await API.get(`/api/channel/models`);
+      let localModelOptions = res.data.data.map((model) => ({
+        key: model.id,
+        text: model.id,
+        value: model.id
+      }));
+      setOriginModelOptions(localModelOptions);
+      setFullModels(res.data.data.map((model) => model.id));
+      setBasicModels(res.data.data.filter((model) => {
+        return model.id.startsWith('gpt-3') || model.id.startsWith('text-');
+      }).map((model) => model.id));
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      let res = await API.get(`/api/group/`);
+      setGroupOptions(res.data.data.map((group) => ({
+        key: group,
+        text: group,
+        value: group
+      })));
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  useEffect(() => {
+    let localModelOptions = [...originModelOptions];
+    inputs.models.forEach((model) => {
+      if (!localModelOptions.find((option) => option.key === model)) {
+        localModelOptions.push({
+          key: model,
+          text: model,
+          value: model
+        });
+      }
+    });
+    setModelOptions(localModelOptions);
+  }, [originModelOptions, inputs.models]);
+
+  useEffect(() => {
+    if (isEdit) {
+      loadChannel().then();
+    }
+    fetchModels().then();
+    fetchGroups().then();
+  }, []);
+
+  useEffect(() => {
+    setInputs((inputs) => ({ ...inputs, auto_ban: autoBan ? 1 : 0 }));
+    console.log(autoBan);
+  }, [autoBan]);
+
+  const submit = async () => {
+    if (!isEdit && (inputs.name === '' || inputs.key === '')) {
+      showInfo('请填写渠道名称和渠道密钥！');
+      return;
+    }
+    if (inputs.models.length === 0) {
+      showInfo('请至少选择一个模型！');
+      return;
+    }
+    if (inputs.model_mapping !== '' && !verifyJSON(inputs.model_mapping)) {
+      showInfo('模型映射必须是合法的 JSON 格式！');
+      return;
+    }
+    let localInputs = inputs;
+    if (localInputs.base_url && localInputs.base_url.endsWith('/')) {
+      localInputs.base_url = localInputs.base_url.slice(0, localInputs.base_url.length - 1);
+    }
+    if (localInputs.type === 3 && localInputs.other === '') {
+      localInputs.other = '2023-06-01-preview';
+    }
+    if (localInputs.type === 18 && localInputs.other === '') {
+      localInputs.other = 'v2.1';
+    }
+    let res;
+    if (!Array.isArray(localInputs.models)) {
+        showError('提交失败，请勿重复提交！');
+        handleCancel();
+        return;
+    }
+    localInputs.models = localInputs.models.join(',');
+    localInputs.group = localInputs.groups.join(',');
+    if (isEdit) {
+      res = await API.put(`/api/channel/`, { ...localInputs, id: parseInt(channelId) });
+    } else {
+      res = await API.post(`/api/channel/`, localInputs);
+    }
+    const { success, message } = res.data;
+    if (success) {
+      if (isEdit) {
+        showSuccess('渠道更新成功！');
+      } else {
+        showSuccess('渠道创建成功！');
+        setInputs(originInputs);
+      }
+    } else {
+      showError(message);
+    }
+  };
+
+  const addCustomModel = () => {
+    if (customModel.trim() === '') return;
+    if (inputs.models.includes(customModel)) return;
+    let localModels = [...inputs.models];
+    localModels.push(customModel);
+    let localModelOptions = [];
+    localModelOptions.push({
+      key: customModel,
+      text: customModel,
+      value: customModel
+    });
+    setModelOptions(modelOptions => {
+      return [...modelOptions, ...localModelOptions];
+    });
+    setCustomModel('');
+    handleInputChange(null, { name: 'models', value: localModels });
+  };
+
+  return (
+    <>
+      <Segment loading={loading}>
+        <Header as='h3'>{isEdit ? '更新渠道信息' : '创建新的渠道'}</Header>
+        <Form autoComplete='new-password'>
+          <Form.Field>
+            <Form.Select
+              label='类型'
+              name='type'
+              required
+              options={CHANNEL_OPTIONS}
+              value={inputs.type}
+              onChange={handleInputChange}
+            />
+          </Form.Field>
+          {
+            inputs.type === 3 && (
+              <>
+                <Message>
+                  注意，<strong>模型部署名称必须和模型名称保持一致</strong>，因为 One API 会把请求体中的 model
+                  参数替换为你的部署名称（模型名称中的点会被剔除），<a target='_blank'
+                                                                    href='https://github.com/songquanpeng/one-api/issues/133?notification_referrer_id=NT_kwDOAmJSYrM2NjIwMzI3NDgyOjM5OTk4MDUw#issuecomment-1571602271'>图片演示</a>。
+                </Message>
+                <Form.Field>
+                  <Form.Input
+                    label='AZURE_OPENAI_ENDPOINT'
+                    name='base_url'
+                    placeholder={'请输入 AZURE_OPENAI_ENDPOINT，例如：https://docs-test-001.openai.azure.com'}
+                    onChange={handleInputChange}
+                    value={inputs.base_url}
+                    autoComplete='new-password'
+                  />
+                </Form.Field>
+                <Form.Field>
+                  <Form.Input
+                    label='默认 API 版本'
+                    name='other'
+                    placeholder={'请输入默认 API 版本，例如：2023-06-01-preview，该配置可以被实际的请求查询参数所覆盖'}
+                    onChange={handleInputChange}
+                    value={inputs.other}
+                    autoComplete='new-password'
+                  />
+                </Form.Field>
+              </>
+            )
+          }
+          {
+            inputs.type === 8 && (
+              <Form.Field>
+                <Form.Input
+                  label='Base URL'
+                  name='base_url'
+                  placeholder={'请输入自定义渠道的 Base URL，例如：https://openai.justsong.cn'}
+                  onChange={handleInputChange}
+                  value={inputs.base_url}
+                  autoComplete='new-password'
+                />
+              </Form.Field>
+            )
+          }
+          <Form.Field>
+            <Form.Input
+              label='名称'
+              required
+              name='name'
+              placeholder={'请为渠道命名'}
+              onChange={handleInputChange}
+              value={inputs.name}
+              autoComplete='new-password'
+            />
+          </Form.Field>
+          <Form.Field>
+            <Form.Dropdown
+              label='分组'
+              placeholder={'请选择可以使用该渠道的分组'}
+              name='groups'
+              required
+              fluid
+              multiple
+              selection
+              allowAdditions
+              additionLabel={'请在系统设置页面编辑分组倍率以添加新的分组：'}
+              onChange={handleInputChange}
+              value={inputs.groups}
+              autoComplete='new-password'
+              options={groupOptions}
+            />
+          </Form.Field>
+          {
+            inputs.type === 18 && (
+              <Form.Field>
+                <Form.Input
+                  label='模型版本'
+                  name='other'
+                  placeholder={'请输入星火大模型版本，注意是接口地址中的版本号，例如：v2.1'}
+                  onChange={handleInputChange}
+                  value={inputs.other}
+                  autoComplete='new-password'
+                />
+              </Form.Field>
+            )
+          }
+          {
+            inputs.type === 21 && (
+              <Form.Field>
+                <Form.Input
+                  label='知识库 ID'
+                  name='other'
+                  placeholder={'请输入知识库 ID，例如：123456'}
+                  onChange={handleInputChange}
+                  value={inputs.other}
+                  autoComplete='new-password'
+                />
+              </Form.Field>
+            )
+          }
+          <Form.Field>
+            <Form.Dropdown
+              label='模型'
+              placeholder={'请选择该渠道所支持的模型'}
+              name='models'
+              required
+              fluid
+              multiple
+              selection
+              onChange={handleInputChange}
+              value={inputs.models}
+              autoComplete='new-password'
+              options={modelOptions}
+            />
+          </Form.Field>
+          <div style={{ lineHeight: '40px', marginBottom: '12px' }}>
+            <Button type={'button'} onClick={() => {
+              handleInputChange(null, { name: 'models', value: basicModels });
+            }}>填入基础模型</Button>
+            <Button type={'button'} onClick={() => {
+              handleInputChange(null, { name: 'models', value: fullModels });
+            }}>填入所有模型</Button>
+            <Button type={'button'} onClick={() => {
+              handleInputChange(null, { name: 'models', value: [] });
+            }}>清除所有模型</Button>
+            <Input
+              action={
+                <Button type={'button'} onClick={addCustomModel}>填入</Button>
+              }
+              placeholder='输入自定义模型名称'
+              value={customModel}
+              onChange={(e, { value }) => {
+                setCustomModel(value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  addCustomModel();
+                  e.preventDefault();
+                }
+              }}
+            />
+          </div>
+          <Form.Field>
+            <Form.TextArea
+              label='模型重定向'
+              placeholder={`此项可选，用于修改请求体中的模型名称，为一个 JSON 字符串，键为请求中模型名称，值为要替换的模型名称，例如：\n${JSON.stringify(MODEL_MAPPING_EXAMPLE, null, 2)}`}
+              name='model_mapping'
+              onChange={handleInputChange}
+              value={inputs.model_mapping}
+              style={{ minHeight: 150, fontFamily: 'JetBrains Mono, Consolas' }}
+              autoComplete='new-password'
+            />
+          </Form.Field>
+          {
+            batch ? <Form.Field>
+              <Form.TextArea
+                label='密钥'
+                name='key'
+                required
+                placeholder={'请输入密钥，一行一个'}
+                onChange={handleInputChange}
+                value={inputs.key}
+                style={{ minHeight: 150, fontFamily: 'JetBrains Mono, Consolas' }}
+                autoComplete='new-password'
+              />
+            </Form.Field> : <Form.Field>
+              <Form.Input
+                label='密钥'
+                name='key'
+                required
+                placeholder={type2secretPrompt(inputs.type)}
+                onChange={handleInputChange}
+                value={inputs.key}
+                autoComplete='new-password'
+              />
+            </Form.Field>
+          }
+          <Form.Field>
+            <Form.Input
+                label='组织，可选，不填则为默认组织'
+                name='openai_organization'
+                placeholder='请输入组织org-xxx'
+                onChange={handleInputChange}
+                value={inputs.openai_organization}
+            />
+          </Form.Field>
+          <Form.Field>
+            <Form.Checkbox
+                label='是否自动禁用（仅当自动禁用开启时有效），关闭后不会自动禁用该渠道'
+                name='auto_ban'
+                checked={autoBan}
+                onChange={
+                    () => {
+                        setAutoBan(!autoBan);
+
+                    }
+                }
+                // onChange={handleInputChange}
+            />
+          </Form.Field>
+          {
+            !isEdit && (
+              <Form.Checkbox
+                checked={batch}
+                label='批量创建'
+                name='batch'
+                onChange={() => setBatch(!batch)}
+              />
+            )
+          }
+          {
+            inputs.type !== 3 && inputs.type !== 8 && inputs.type !== 22 && (
+              <Form.Field>
+                <Form.Input
+                  label='代理'
+                  name='base_url'
+                  placeholder={'此项可选，用于通过代理站来进行 API 调用，请输入代理站地址，格式为：https://domain.com'}
+                  onChange={handleInputChange}
+                  value={inputs.base_url}
+                  autoComplete='new-password'
+                />
+              </Form.Field>
+            )
+          }
+          {
+            inputs.type === 22 && (
+              <Form.Field>
+                <Form.Input
+                  label='私有部署地址'
+                  name='base_url'
+                  placeholder={'请输入私有部署地址，格式为：https://fastgpt.run/api/openapi'}
+                  onChange={handleInputChange}
+                  value={inputs.base_url}
+                  autoComplete='new-password'
+                />
+              </Form.Field>
+            )
+          }
+              <Form.Field>
+            <Form.Input
+                label='强制指定使用顺序'
+                name='sort'
+                placeholder={'此项可选，默认值0,大的先使用,用完才会用小的'}
+                onChange={handleInputChange}
+                value={inputs.sort}
+                autoComplete='new-password'
+                type='number'
+            />
+          </Form.Field>
+          <Form.Field>
+            <Form.Checkbox
+                checked={inputs.overFrequencyAutoDisable}
+                label='请求返回的HTTP状态码非200自动禁用,并且每隔5分钟测试通道,测试通过则自动启用'
+                name='overFrequencyAutoDisable'
+                onChange={handleInputChange}
+            />
+          </Form.Field>
+
+          <Button onClick={handleCancel}>取消</Button>
+          <Button type={isEdit ? 'button' : 'submit'} positive onClick={submit}>提交</Button>
+        </Form>
+      </Segment>
+    </>
+  );
+};
+
+export default EditChannel;
