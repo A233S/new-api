@@ -63,22 +63,19 @@ const EditChannel = () => {
   const [customModel, setCustomModel] = useState('');
   const [overFrequencyAutoDisable, setOverFrequencyAutoDisable] = useState(false);
 
-  const handleInputChange = (e, { name, value }) => {
+const handleInputChange = (e, { name, value, checked }) => {
+  if (name === 'overFrequencyAutoDisable') {
+    setInputs((inputs) => ({ ...inputs, [name]: checked }));
+    return;
+  }
+
+  if (name === 'sort') {
+    setInputs((inputs) => ({ ...inputs, [name]: parseInt(value) }));
+  } else {
     setInputs((inputs) => ({ ...inputs, [name]: value }));
-    if (name === 'sort'){
-        setInputs((inputs) => ({ ...inputs, [name]: parseInt(value) }));
-    }
-    if (name === 'overFrequencyAutoDisable') {
-      value = value === 'true' ? 'false' : 'true';
-      if (value === 'true'){
-        // setOverFrequencyAutoDisable(true);
-        setInputs((inputs) => ({ ...inputs, [name]: true }));
-      }else {
-        // setOverFrequencyAutoDisable(false);
-        setInputs((inputs) => ({ ...inputs, [name]: false }));
-      }
-      return;
-    }
+  }
+};
+
     if (name === 'type' && inputs.models.length === 0) {
       let localModels = [];
       switch (value) {
@@ -534,7 +531,7 @@ const EditChannel = () => {
           </Form.Field>
           <Form.Field>
             <Form.Checkbox
-                checked={inputs.overFrequencyAutoDisable === true}
+                checked={inputs.overFrequencyAutoDisable}
                 label='请求返回的HTTP状态码非200自动禁用,并且每隔5分钟测试通道,测试通过则自动启用'
                 name='overFrequencyAutoDisable'
                 onChange={handleInputChange}
