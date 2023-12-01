@@ -105,12 +105,7 @@ const SiderBar = () => {
       setShowSidebar(pathsToShowSidebar.includes(location.pathname));
     }, [location]);
 
-    const pathsToShowSidebar = ['/', '/topup','/setting'];
-    const shouldShowSidebar = pathsToShowSidebar.includes(location.pathname);
-    const [showSidebar, setShowSidebar] = useState(shouldShowSidebar);
 
-    const systemName = getSystemName();
-    const logo = getLogo();
 
     async function logout() {
         setShowSidebar(false);
