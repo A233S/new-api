@@ -34,7 +34,7 @@ const ChannelsTable = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searching, setSearching] = useState(false);
   const [updatingBalance, setUpdatingBalance] = useState(false);
-  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+  const [pageSize, setPageSize] = useState(1000);
   const [showPrompt, setShowPrompt] = useState(shouldShowPrompt("channel-test"));
 
   const loadChannels = async (startIdx) => {
