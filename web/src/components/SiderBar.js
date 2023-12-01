@@ -116,52 +116,59 @@ const SiderBar = () => {
         navigate('/login');
     }
 
-    return (
-        <>
-            <Layout>
-                <div style={{height: '100%'}}>
-                    <Nav
-                        defaultIsCollapsed={!showSidebar}
-                        selectedKeys={selectedKeys}
-                        renderWrapper={({itemElement, isSubNav, isInSubNav, props}) => {
-                            const routerMap = {
-                                home: "/",
-                                channel: "/channel",
-                                token: "/token",
-                                redemption: "/redemption",
-                                topup: "/topup",
-                                user: "/user",
-                                log: "/log",
-                                midjourney: "/midjourney",
-                                setting: "/setting",
-                                about: "/about",
-                                chat: "/chat",
-                            };
-                            return (
-                                <Link
-                                    style={{textDecoration: "none"}}
-                                    to={routerMap[props.itemKey]}
-                                >
-                                    {itemElement}
-                                </Link>
-                            );
-                        }}
-                        items={headerButtons}
-                        onSelect={key => {
-                            setSelectedKeys([key.itemKey]);
-                        }}
-                        header={{
-                            logo: <img src={logo} alt='logo' style={{marginRight: '0.75em'}}/>,
-                            text: systemName,
-                        }}
-                    >
-                        <Nav.Footer collapseButton={true}>
-                        </Nav.Footer>
-                    </Nav>
-                </div>
-            </Layout>
-        </>
-    );
-};
+return (
+    <>
+        <Layout>
+            <div style={{height: '100%'}}>
+                <Nav
+                    defaultCollapsed={true}
+                    // mode={'horizontal'}
+                    // bodyStyle={{ height: 100 }}
+                    defaultIsCollapsed={isMobile()}
+                    selectedKeys={selectedKeys}
+                    renderWrapper={({itemElement, isSubNav, isInSubNav, props}) => {
+                        const routerMap = {
+                            home: "/",
+                            channel: "/channel",
+                            token: "/token",
+                            redemption: "/redemption",
+                            topup: "/topup",
+                            user: "/user",
+                            log: "/log",
+                            midjourney: "/midjourney",
+                            setting: "/setting",
+                            about: "/about",
+                            chat: "/chat",
+                        };
+                        return (
+                            <Link
+                                style={{textDecoration: "none"}}
+                                to={routerMap[props.itemKey]}
+                            >
+                                {itemElement}
+                            </Link>
+                        );
+                    }}
+                    items={headerButtons}
+                    onSelect={key => {
+                        console.log(key);
+                        setSelectedKeys([key.itemKey]);
+                    }}
+                    header={{
+                        logo: <img src={logo} alt='logo' style={{marginRight: '0.75em'}}/>,
+                        text: systemName,
+                    }}
+                    // footer={{
+                    //   text: '© 2021 NekoAPI',
+                    // }}
+                >
+                    <Nav.Footer collapseButton={true}>
+                    </Nav.Footer>
+                </Nav>
+            </div>
+        </Layout>
+    </>
+);
+
 
 export default SiderBar;
