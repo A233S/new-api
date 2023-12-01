@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import {Link, useNavigate, useLocation} from 'react-router-dom';
 import {UserContext} from '../context/User';
 
@@ -93,6 +93,17 @@ const SiderBar = () => {
     let navigate = useNavigate();
     const [selectedKeys, setSelectedKeys] = useState(['home']);
     let location = useLocation();
+
+    const pathsToShowSidebar = ['/', '/topup','/setting'];
+    const shouldShowSidebar = pathsToShowSidebar.includes(location.pathname);
+    const [showSidebar, setShowSidebar] = useState(shouldShowSidebar);
+
+    const systemName = getSystemName();
+    const logo = getLogo();
+
+    useEffect(() => {
+      setShowSidebar(pathsToShowSidebar.includes(location.pathname));
+    }, [location]);
 
     const pathsToShowSidebar = ['/', '/topup','/setting'];
     const shouldShowSidebar = pathsToShowSidebar.includes(location.pathname);
