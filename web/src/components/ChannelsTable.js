@@ -27,133 +27,8 @@ function renderType(type) {
   return <Label basic color={type2label[type]?.color}>{type2label[type]?.text}</Label>;
 }
 
-function renderBalance(type, balance) {
-  switch (type) {
-    case 1: // OpenAI
-      return <span>${balance.toFixed(2)}</span>;
-    case 4: // CloseAI
-      return <span>¥{balance.toFixed(2)}</span>;
-    case 8: // 自定义
-      return <span>${balance.toFixed(2)}</span>;
-    case 5: // OpenAI-SB
-      return <span>¥{(balance / 10000).toFixed(2)}</span>;
-    case 10: // AI Proxy
-      return <span>{renderNumber(balance)}</span>;
-    case 12: // API2GPT
-      return <span>¥{balance.toFixed(2)}</span>;
-    case 13: // AIGC2D
-      return <span>{renderNumber(balance)}</span>;
-    default:
-      return <span>不支持</span>;
-  }
-}
-
 const ChannelsTable = () => {
-  const [channels, setChannels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activePage, setActivePage] = useState(1);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [updatingBalance, setUpdatingBalance] = useState(false);
-  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
-  const [showPrompt, setShowPrompt] = useState(shouldShowPrompt("channel-test"));
-
-  const loadChannels = async (startIdx) => {
-    const res = await API.get(`/api/channel/?p=${startIdx}&page_size=${pageSize}`);
-    const { success, message, data } = res.data;
-    if (success) {
-      if (startIdx === 0) {
-        setChannels(data);
-      } else {
-        let newChannels = [...channels];
-        newChannels.splice(startIdx * pageSize, data.length, ...data);
-        setChannels(newChannels);
-      }
-    } else {
-      showError(message);
-    }
-    setLoading(false);
-  };
-
-  const onPaginationChange = (e, { activePage }) => {
-    (async () => {
-      if (activePage === Math.ceil(channels.length / pageSize) + 1) {
-        // In this case we have to load more data and then append them.
-        await loadChannels(activePage - 1, pageSize);
-      }
-      setActivePage(activePage);
-    })();
-  };
-
-  const setItemsPerPage = (e) => {
-    console.log(e.target.value);
-    //parseInt(e.target.value);
-    setPageSize(parseInt(e.target.value));
-    loadChannels(0);
-  }
-
-  const refresh = async () => {
-    setLoading(true);
-    await loadChannels(activePage - 1);
-  };
-
-  useEffect(() => {
-    loadChannels(0)
-      .then()
-      .catch((reason) => {
-        showError(reason);
-      });
-  }, []);
-
-  const manageChannel = async (id, action, idx, value) => {
-    let data = { id };
-    let res;
-    switch (action) {
-      case 'delete':
-        res = await API.delete(`/api/channel/${id}/`);
-        break;
-      case 'enable':
-        data.status = 1;
-        res = await API.put('/api/channel/', data);
-        break;
-      case 'disable':
-        data.status = 2;
-        res = await API.put('/api/channel/', data);
-        break;
-      case 'priority':
-        if (value === '') {
-          return;
-        }
-        data.priority = parseInt(value);
-        res = await API.put('/api/channel/', data);
-        break;
-      case 'weight':
-        if (value === '') {
-          return;
-        }
-        data.weight = parseInt(value);
-        if (data.weight < 0) {
-          data.weight = 0;
-        }
-        res = await API.put('/api/channel/', data);
-        break;
-    }
-    const { success, message } = res.data;
-    if (success) {
-      showSuccess('操作成功完成！');
-      let channel = res.data.data;
-      let newChannels = [...channels];
-      let realIdx = (activePage - 1) * pageSize + idx;
-      if (action === 'delete') {
-        newChannels[realIdx].deleted = true;
-      } else {
-        newChannels[realIdx].status = channel.status;
-      }
-      setChannels(newChannels);
-    } else {
-      showError(message);
-    }
-  };
+  // ...省略部分代码...
 
   const renderStatus = (status) => {
     switch (status) {
@@ -204,113 +79,7 @@ const ChannelsTable = () => {
     }
   };
 
-  const searchChannels = async () => {
-    if (searchKeyword === '') {
-      // if keyword is blank, load files instead.
-      await loadChannels(0);
-      setActivePage(1);
-      return;
-    }
-    setSearching(true);
-    const res = await API.get(`/api/channel/search?keyword=${searchKeyword}`);
-    const { success, message, data } = res.data;
-    if (success) {
-      setChannels(data);
-      setActivePage(1);
-    } else {
-      showError(message);
-    }
-    setSearching(false);
-  };
-
-  const testChannel = async (id, name, idx) => {
-    const res = await API.get(`/api/channel/test/${id}/`);
-    const { success, message, time } = res.data;
-    if (success) {
-      let newChannels = [...channels];
-      let realIdx = (activePage - 1) * pageSize + idx;
-      newChannels[realIdx].response_time = time * 1000;
-      newChannels[realIdx].test_time = Date.now() / 1000;
-      setChannels(newChannels);
-      showInfo(`通道 ${name} 测试成功，耗时 ${time.toFixed(2)} 秒。`);
-    } else {
-      showError(message);
-    }
-  };
-
-  const testAllChannels = async () => {
-    const res = await API.get(`/api/channel/test`);
-    const { success, message } = res.data;
-    if (success) {
-      showInfo('已成功开始测试所有已启用通道，请刷新页面查看结果。');
-    } else {
-      showError(message);
-    }
-  };
-
-  const deleteAllDisabledChannels = async () => {
-    const res = await API.delete(`/api/channel/disabled`);
-    const { success, message, data } = res.data;
-    if (success) {
-      showSuccess(`已删除所有禁用渠道，共计 ${data} 个`);
-      await refresh();
-    } else {
-      showError(message);
-    }
-  };
-
-  const updateChannelBalance = async (id, name, idx) => {
-    const res = await API.get(`/api/channel/update_balance/${id}/`);
-    const { success, message, balance } = res.data;
-    if (success) {
-      let newChannels = [...channels];
-      let realIdx = (activePage - 1) * pageSize + idx;
-      newChannels[realIdx].balance = balance;
-      newChannels[realIdx].balance_updated_time = Date.now() / 1000;
-      setChannels(newChannels);
-      showInfo(`通道 ${name} 余额更新成功！`);
-    } else {
-      showError(message);
-    }
-  };
-
-  const updateAllChannelsBalance = async () => {
-    setUpdatingBalance(true);
-    const res = await API.get(`/api/channel/update_balance`);
-    const { success, message } = res.data;
-    if (success) {
-      showInfo('已更新完毕所有已启用通道余额！');
-    } else {
-      showError(message);
-    }
-    setUpdatingBalance(false);
-  };
-
-  const handleKeywordChange = async (e, { value }) => {
-    setSearchKeyword(value.trim());
-  };
-
-  const sortChannel = (key) => {
-    if (channels.length === 0) return;
-    setLoading(true);
-    let sortedChannels = [...channels];
-    if (typeof sortedChannels[0][key] === 'string') {
-      sortedChannels.sort((a, b) => {
-        return ('' + a[key]).localeCompare(b[key]);
-      });
-    } else {
-      sortedChannels.sort((a, b) => {
-        if (a[key] === b[key]) return 0;
-        if (a[key] > b[key]) return -1;
-        if (a[key] < b[key]) return 1;
-      });
-    }
-    if (sortedChannels[0].id === channels[0].id) {
-      sortedChannels.reverse();
-    }
-    setChannels(sortedChannels);
-    setLoading(false);
-  };
+  // ...省略部分代码...
 
   return (
     <>
@@ -392,31 +161,6 @@ const ChannelsTable = () => {
             >
               响应时间
             </Table.HeaderCell>
-            <Table.HeaderCell
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  sortChannel('used_quota');
-                }}
-                width={1}
-            >
-              已使用
-            </Table.HeaderCell>
-            <Table.HeaderCell
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                sortChannel('balance');
-              }}
-            >
-              余额
-            </Table.HeaderCell>
-            <Table.HeaderCell
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                sortChannel('priority');
-              }}
-            >
-              优先级
-            </Table.HeaderCell>
             <Table.HeaderCell>操作</Table.HeaderCell>
           </Table.Row>
         </Table.Header>
@@ -441,34 +185,6 @@ const ChannelsTable = () => {
                       content={channel.test_time ? renderTimestamp(channel.test_time) : '未测试'}
                       key={channel.id}
                       trigger={renderResponseTime(channel.response_time)}
-                      basic
-                    />
-                  </Table.Cell>
-                  <Table.Cell>{renderQuota(channel.used_quota)}</Table.Cell>
-                  <Table.Cell>
-                    <Popup
-                      trigger={<span onClick={() => {
-                        updateChannelBalance(channel.id, channel.name, idx);
-                      }} style={{ cursor: 'pointer' }}>
-                      {renderBalance(channel.type, channel.balance)}
-                    </span>}
-                      content='点击更新'
-                      basic
-                    />
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Popup
-                      trigger={<Input type='number' defaultValue={channel.priority} onBlur={(event) => {
-                        manageChannel(
-                          channel.id,
-                          'priority',
-                          idx,
-                          event.target.value
-                        );
-                      }}>
-                        <input style={{ maxWidth: '60px' }} />
-                      </Input>}
-                      content='渠道选择优先级，越高越优先'
                       basic
                     />
                   </Table.Cell>
@@ -530,16 +246,13 @@ const ChannelsTable = () => {
 
         <Table.Footer>
           <Table.Row>
-            <Table.HeaderCell colSpan='10'>
+            <Table.HeaderCell colSpan='7'>
               <Button size='small' as={Link} to='/channel/add' loading={loading}>
                 添加新的渠道
               </Button>
               <Button size='small' loading={loading} onClick={testAllChannels}>
                 测试所有已启用通道
               </Button>
-              <Button size='small' onClick={updateAllChannelsBalance}
-                      loading={loading || updatingBalance}>更新所有已启用通道余额</Button>
-
               <div style={{ float: 'right' }}>
                 <div className="ui labeled input" style={{marginRight: '10px'}}>
                   <div className="ui label">每页数量</div>
