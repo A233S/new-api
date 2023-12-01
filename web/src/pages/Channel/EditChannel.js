@@ -534,8 +534,8 @@ const EditChannel = () => {
           </Form.Field>
           <Form.Field>
             <Form.Checkbox
-                checked={overFrequencyAutoDisable}
-                label='超频熔断(HTTP状态码非200时是否自动禁用通道,禁用后每隔一定时间轮训一次如果复活则自动启用通道)'
+                checked={inputs.overFrequencyAutoDisable === true}
+                label='请求返回的HTTP状态码非200自动禁用,并且每隔5分钟测试通道,测试通过则自动启用'
                 name='overFrequencyAutoDisable'
                 onChange={handleInputChange}
             />
